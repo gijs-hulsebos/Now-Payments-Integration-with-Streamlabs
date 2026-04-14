@@ -1,7 +1,6 @@
 import express from 'express';
 import next from 'next';
 import crypto from 'crypto';
-import axios from 'axios';
 import { parse } from 'url';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -15,6 +14,13 @@ app.prepare().then(() => {
   server.use(express.json());
 
   // Webhook endpoint
+  server.all('/webhook', (req, res, next) => {
+    if (req.method !== 'POST') {
+      return res.status(405).send('Method Not Allowed');
+    }
+    next();
+  });
+
   server.post('/webhook', async (req, res) => {
     try {
       const payload = req.body;
@@ -62,17 +68,25 @@ app.prepare().then(() => {
           name: payload.order_id || 'Crypto Supporter',
           amount: payload.pay_amount,
           currency: payload.pay_currency ? payload.pay_currency.toUpperCase() : 'USD',
-          message: 'Crypto donation via NOWPayments',
+          message: payload.order_description || 'Crypto donation via NOWPayments',
           identifier: payload.payment_id
         };
 
-        // Send to Streamlabs
-        await axios.post('https://streamlabs.com/api/v1.0/donations', streamlabsPayload, {
+        // Send to Streamlabs using fetch
+        const response = await fetch('https://streamlabs.com/api/v1.0/donations', {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${streamlabsToken}`,
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify(streamlabsPayload)
         });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Streamlabs API error:', response.status, errorText);
+          return res.status(502).send('Failed to forward donation to Streamlabs');
+        }
 
         console.log('Successfully sent donation to Streamlabs');
       }
