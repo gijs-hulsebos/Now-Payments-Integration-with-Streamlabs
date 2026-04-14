@@ -61,13 +61,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
       }
 
+      const cryptoCurrency = payload.pay_currency ? payload.pay_currency.toUpperCase() : 'CRYPTO';
+      const originalMessage = payload.order_description || 'Crypto donation via NOWPayments';
+
       const streamlabsPayload = {
-        access_token: streamlabsToken,
         name: payload.order_id || 'Crypto Supporter',
-        amount: payload.pay_amount,
-        currency: payload.pay_currency ? payload.pay_currency.toUpperCase() : 'USD',
-        message: payload.order_description || 'Crypto donation via NOWPayments',
-        identifier: payload.payment_id
+        amount: Number(payload.price_amount || payload.pay_amount),
+        currency: 'USD',
+        message: `(${payload.pay_amount} ${cryptoCurrency}) ${originalMessage}`,
+        identifier: payload.payment_id ? payload.payment_id.toString() : Date.now().toString()
       };
 
       console.log('Sending payload to Streamlabs:', streamlabsPayload);
@@ -76,6 +78,7 @@ export async function POST(req: Request) {
       const response = await fetch('https://streamlabs.com/api/v1.0/donations', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${streamlabsToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(streamlabsPayload)
