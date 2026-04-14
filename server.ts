@@ -14,11 +14,8 @@ app.prepare().then(() => {
   server.use(express.json());
 
   // Webhook endpoint
-  server.all('/webhook', (req, res, next) => {
-    if (req.method !== 'POST') {
-      return res.status(405).send('Method Not Allowed');
-    }
-    next();
+  server.get('/webhook', (req, res) => {
+    res.status(405).send('Method Not Allowed: NOWPayments IPN sends POST requests. If you are seeing this, you likely configured this URL as a success_url instead of the IPN Callback URL, or you are visiting it in a browser.');
   });
 
   server.post('/webhook', async (req, res) => {
@@ -65,6 +62,7 @@ app.prepare().then(() => {
         }
 
         const streamlabsPayload = {
+          access_token: streamlabsToken,
           name: payload.order_id || 'Crypto Supporter',
           amount: payload.pay_amount,
           currency: payload.pay_currency ? payload.pay_currency.toUpperCase() : 'USD',
@@ -76,7 +74,6 @@ app.prepare().then(() => {
         const response = await fetch('https://streamlabs.com/api/v1.0/donations', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${streamlabsToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(streamlabsPayload)
