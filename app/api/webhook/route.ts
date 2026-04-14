@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         amount: Number(payload.price_amount || payload.pay_amount),
         currency: 'USD',
         message: `(${payload.pay_amount} ${payload.pay_currency.toUpperCase()}) ${payload.order_description || ''}`,
-        identifier: payload.payment_id ? payload.payment_id.toString() : Date.now().toString()
+        identifier: String(payload.payment_id)
       };
 
       console.log('Sending payload to Streamlabs:', streamlabsPayload);
