@@ -10,20 +10,27 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = express();
 
-  // Parse JSON bodies
+  // Parse JSON and URL-encoded bodies
   server.use(express.json());
+  server.use(express.urlencoded({ extended: true }));
 
   // Webhook endpoint
   server.get('/webhook', (req, res) => {
+    console.log('Received GET request to /webhook');
     res.status(405).send('Method Not Allowed: NOWPayments IPN sends POST requests. If you are seeing this, you likely configured this URL as a success_url instead of the IPN Callback URL, or you are visiting it in a browser.');
   });
 
   server.post('/webhook', async (req, res) => {
+    console.log('--- Received POST request to /webhook ---');
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    
     try {
       const payload = req.body;
       const signature = req.headers['x-nowpayments-sig'];
 
       if (!signature) {
+        console.error('Missing x-nowpayments-sig header');
         return res.status(400).send('Missing signature');
       }
 
@@ -33,13 +40,20 @@ app.prepare().then(() => {
         return res.status(500).send('Server configuration error');
       }
 
-      // Sort keys alphabetically
-      const sortedKeys = Object.keys(payload).sort();
-      const sortedPayload: Record<string, any> = {};
-      for (const key of sortedKeys) {
-        sortedPayload[key] = payload[key];
+      // Sort keys alphabetically (recursive)
+      function sortObject(obj: any): any {
+        if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
+          return obj;
+        }
+        return Object.keys(obj).sort().reduce((result: any, key: string) => {
+          result[key] = (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) 
+            ? sortObject(obj[key]) 
+            : obj[key];
+          return result;
+        }, {});
       }
 
+      const sortedPayload = sortObject(payload);
       const stringifiedPayload = JSON.stringify(sortedPayload);
 
       // Create HMAC-SHA512 signature
