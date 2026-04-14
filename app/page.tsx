@@ -12,7 +12,7 @@ export default function Home() {
           <ul className="space-y-3">
             <li className="flex items-center">
               <span className="w-4 h-4 rounded-full mr-3 flex-shrink-0 bg-green-500"></span>
-              <span className="text-gray-700">Webhook Endpoint: <code className="bg-gray-200 px-2 py-1 rounded text-sm">POST /webhook</code></span>
+              <span className="text-gray-700">Webhook Endpoint: <code className="bg-gray-200 px-2 py-1 rounded text-sm">POST /api/webhook</code></span>
             </li>
             <li className="flex items-center">
               <span className="w-4 h-4 rounded-full mr-3 flex-shrink-0 bg-blue-500"></span>
