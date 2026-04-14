@@ -61,14 +61,11 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
       }
 
-      const cryptoCurrency = payload.pay_currency ? payload.pay_currency.toUpperCase() : 'CRYPTO';
-      const originalMessage = payload.order_description || 'Crypto donation via NOWPayments';
-
       const streamlabsPayload = {
-        name: payload.order_id || 'Crypto Supporter',
+        name: payload.order_id,
         amount: Number(payload.price_amount || payload.pay_amount),
         currency: 'USD',
-        message: `(${payload.pay_amount} ${cryptoCurrency}) ${originalMessage}`,
+        message: `(${payload.pay_amount} ${payload.pay_currency.toUpperCase()}) ${payload.order_description || ''}`,
         identifier: payload.payment_id ? payload.payment_id.toString() : Date.now().toString()
       };
 
