@@ -62,11 +62,11 @@ export async function POST(req: Request) {
       }
 
       const streamlabsPayload = {
-        name: payload.order_id,
-        amount: Number(payload.price_amount || payload.pay_amount),
+        name: String(payload.order_id || 'Anonymous'),
+        amount: Number(payload.price_amount || payload.pay_amount || 0),
         currency: 'USD',
-        message: `(${payload.pay_amount} ${payload.pay_currency.toUpperCase()}) ${payload.order_description || ''}`,
-        identifier: String(payload.payment_id)
+        message: `(${payload.pay_amount || 0} ${(payload.pay_currency || 'CRYPTO').toUpperCase()}) ${payload.order_description || ''}`.trim(),
+        identifier: String(payload.payment_id || Date.now())
       };
 
       console.log("Sending to Streamlabs:", streamlabsPayload);
