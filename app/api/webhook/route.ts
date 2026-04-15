@@ -61,17 +61,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
       }
 
-      const userComment = payload.order_description;
-
       const streamlabsPayload = {
         name: payload.order_id,
         amount: Number(payload.price_amount || payload.pay_amount),
         currency: 'USD',
-        message: `(${payload.pay_amount} ${payload.pay_currency.toUpperCase()}) ${userComment || ''}`,
+        message: `(${payload.pay_amount} ${payload.pay_currency.toUpperCase()}) ${payload.order_description || ''}`,
         identifier: String(payload.payment_id)
       };
 
-      console.log("Payload sent to SL:", streamlabsPayload);
+      console.log("Sending to Streamlabs:", streamlabsPayload);
 
       // Send to Streamlabs using fetch
       const response = await fetch('https://streamlabs.com/api/v1.0/donations', {
@@ -84,8 +82,7 @@ export async function POST(req: Request) {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Streamlabs API error:', response.status, errorText);
+        console.error("SL Error:", await response.text());
         return NextResponse.json({ error: 'Failed to forward donation to Streamlabs' }, { status: 502 });
       }
 
